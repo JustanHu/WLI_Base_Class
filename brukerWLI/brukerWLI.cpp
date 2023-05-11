@@ -4,13 +4,7 @@
 
 #include "brukerWLI.h"
 
-/**
- * @brief  初始化TCP配置
- * @param  null
- * @param  null
- *
- * @return null
- */
+
 brukerWLI::brukerWLI() {
     // 初始化 Socket 库
     WSADATA wsaData; //定义一个 WSADATA 结构体变量 wsaData，用于存储 WSAStartup 函数的返回信息
@@ -34,45 +28,21 @@ brukerWLI::brukerWLI() {
     servaddr.sin_port = htons(brukerWLIPort);   //配置连接的目标端口号
 }
 
-
-/**
- * @brief  清除TCP配置
- * @param  null
- * @param  null
- *
- * @return null
- */
 brukerWLI::~brukerWLI() {
     closesocket(sockfd);  // 关闭套接字tcp
     WSACleanup();  // 清理 Socket 库
 }
 
-
-/**
- * @brief  Bruker TCP连接
- * @param  null
- * @param  null
- *
- * @return 连接成功返回true，连接失败返回false并且输出报错
- */
 bool brukerWLI::tcpBrukerConnect() {
     // 连接服务端
-    if (connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == SOCKET_ERROR) {
+    if (connect(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) == SOCKET_ERROR) {
         std::cerr << "Failed to connect to server: " << WSAGetLastError() << std::endl;
         return false;
     }
     return true;
 }
 
-
-/**
- * @brief  TCP数据发送（hex数据形式发送）
- * @param  null
- * @param  null
- *
- * @return 数据发送成功返回true，发送失败返回false并且输出报错
- */
-bool brukerWLI::tcpSend(const char* data, size_t len) {
+bool brukerWLI::tcpSend(const char *data, size_t len) {
     // 发送数据
     if (send(sockfd, data, len, 0) == SOCKET_ERROR) {
         std::cerr << "Failed to send data: " << WSAGetLastError() << std::endl;
@@ -81,15 +51,7 @@ bool brukerWLI::tcpSend(const char* data, size_t len) {
     return true;
 }
 
-
-/**
- * @brief  TCP数据接收（hex数据形式接收）（Socket阻塞读取）
- * @param  null
- * @param  null
- *
- * @return 数据接收成功返回true，接收失败返回false
- */
-bool brukerWLI::tcpRecv(std::string& recv_data) {
+bool brukerWLI::tcpRecv(std::string &recv_data) {
     char buffer[MAX_BUF_SIZE];  //定义缓冲区最大长度
     int ret = recv(sockfd, buffer, MAX_BUF_SIZE, 0);
     if (ret <= 0) {
@@ -106,23 +68,30 @@ bool brukerWLI::tcpRecv(std::string& recv_data) {
     return true;
 }
 
-
-/**
- * @brief  Bruker目镜转换
- * @param  int MMDNumber可根据实际情况取：bruker55MMD、bruker1MMD、bruker2MMD
- * @param  null
- *
- * @return 转换命令发送成功则返回true，命令发送失败或传入参数错误则返回false
- */
-bool brukerWLI::changeMMD(int MMDNumber){
-    switch(MMDNumber)
-    {
+bool brukerWLI::changeMMD(int MMDNumber) {
+    switch (MMDNumber) {
         case bruker55MMD:
-            return tcpSend(changeMMD_55,sizeof(changeMMD_55));
+            return tcpSend(changeMMD_55, sizeof(changeMMD_55));
         case bruker1MMD:
-            return tcpSend(changeMMD_1,sizeof(changeMMD_1));
+            return tcpSend(changeMMD_1, sizeof(changeMMD_1));
         case bruker2MMD:
-            return tcpSend(changeMMD_2,sizeof(changeMMD_2));
+            return tcpSend(changeMMD_2, sizeof(changeMMD_2));
+        default:
+            std::cerr << "Incorrect incoming parameter!" << std::endl;
+            return false;
+    }
+}
+
+bool brukerWLI::changeTurret(int TurretNumber) {
+    switch (TurretNumber) {
+        case MRe3DSensor:
+            return tcpSend(changeSensor, sizeof(changeSensor));
+        case bruker10Turret:
+            return tcpSend(changeTurret_10, sizeof(changeTurret_10));
+        case bruker20Turret:
+            return tcpSend(changeTurret_20, sizeof(changeTurret_20));
+        case bruker50Turret:
+            return tcpSend(changeTurret_50, sizeof(changeTurret_50));
         default:
             std::cerr << "Incorrect incoming parameter!" << std::endl;
             return false;

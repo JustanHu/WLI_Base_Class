@@ -2,8 +2,8 @@
 // Created by 83787 on 2023/5/5.
 //
 
-#ifndef WLI_BASIC_BRUKERWLI_H
-#define WLI_BASIC_BRUKERWLI_H
+#ifndef WLI_BASE_CLASS_BRUKERWLI_H
+#define WLI_BASE_CLASS_BRUKERWLI_H
 
 #include <vector>
 #include "winsock2.h"
@@ -11,8 +11,6 @@
 #include <iostream>
 
 #define MAX_BUF_SIZE 1024 //将TCP缓冲区的最大大小定义为1024字节
-#define brukerWLIIp "127.0.0.1" //bruker WLI ip地址
-#define brukerWLIPort 1025 //bruker WLI 端口号
 #define bruker55MMD 0x00   //.55倍MMD代号
 #define bruker1MMD  0x01   //1倍MMD代号
 #define bruker2MMD  0x02   //2倍MMD代号
@@ -64,7 +62,7 @@ public:     //公有方法
  *
  * @return null
  */
-    brukerWLI();    //构造函数
+    brukerWLI(const std::string& brukerWLIIp,int brukerWLIPort);    //构造函数
 
 /**
  * @brief  清除TCP配置
@@ -98,4 +96,4 @@ public:     //公有方法
 };
 
 
-#endif //WLI_BASIC_BRUKERWLI_H
+#endif //WLI_BASE_CLASS_BRUKERWLI_H

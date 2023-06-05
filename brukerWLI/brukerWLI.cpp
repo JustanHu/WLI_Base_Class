@@ -5,7 +5,7 @@
 #include "brukerWLI.h"
 
 
-brukerWLI::brukerWLI() {
+brukerWLI::brukerWLI(const std::string& brukerWLIIp,int brukerWLIPort) {
     // 初始化 Socket 库
     WSADATA wsaData; //定义一个 WSADATA 结构体变量 wsaData，用于存储 WSAStartup 函数的返回信息
     int ret = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -24,7 +24,7 @@ brukerWLI::brukerWLI() {
     // 设置服务端地址结构体
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;  //选择地址族为IPv4
-    servaddr.sin_addr.s_addr = inet_addr(brukerWLIIp);  //配置连接的目标ip
+    servaddr.sin_addr.s_addr = inet_addr(brukerWLIIp.c_str());  //配置连接的目标ip
     servaddr.sin_port = htons(brukerWLIPort);   //配置连接的目标端口号
 }
 

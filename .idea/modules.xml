@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/WLI_Basic.iml" filepath="$PROJECT_DIR$/.idea/WLI_Basic.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/WLI_Base_Class.iml" filepath="$PROJECT_DIR$/.idea/WLI_Base_Class.iml" />
     </modules>
   </component>
 </project>

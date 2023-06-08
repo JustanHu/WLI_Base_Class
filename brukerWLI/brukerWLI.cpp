@@ -69,31 +69,116 @@ bool brukerWLI::tcpRecv(std::string &recv_data) {
 }
 
 bool brukerWLI::changeMMD(int MMDNumber) {
-    switch (MMDNumber) {
+    switch (MMDNumber) {    //根据所选MMD镜头倍数发送对应的命令
         case bruker55MMD:
-            return tcpSend(changeMMD_55, sizeof(changeMMD_55));
+             tcpSend(changeMMD_55, sizeof(changeMMD_55));
+             break;
         case bruker1MMD:
-            return tcpSend(changeMMD_1, sizeof(changeMMD_1));
+             tcpSend(changeMMD_1, sizeof(changeMMD_1));
+             break;
         case bruker2MMD:
-            return tcpSend(changeMMD_2, sizeof(changeMMD_2));
+             tcpSend(changeMMD_2, sizeof(changeMMD_2));
+             break;
         default:
             std::cerr << "Incorrect incoming parameter!" << std::endl;
             return false;
     }
+    std::string recv_data;
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus && recv_data == "50C30000040000000A2B0000")//判断是否接收到返回命令并且命令值正确
+        return true;
+    else
+    {
+        std::cerr << "Replacement of MMD multiplier failed!" << std::endl;//打印错误信息“更换MMD倍数失败！”
+        return false;
+    }
+
 }
 
 bool brukerWLI::changeTurret(int TurretNumber) {
     switch (TurretNumber) {
         case MRe3DSensor:
-            return tcpSend(changeSensor, sizeof(changeSensor));
+             tcpSend(changeSensor, sizeof(changeSensor));
+             break;
         case bruker10Turret:
-            return tcpSend(changeTurret_10, sizeof(changeTurret_10));
+             tcpSend(changeTurret_10, sizeof(changeTurret_10));
+             break;
         case bruker20Turret:
-            return tcpSend(changeTurret_20, sizeof(changeTurret_20));
+             tcpSend(changeTurret_20, sizeof(changeTurret_20));
+             break;
         case bruker50Turret:
-            return tcpSend(changeTurret_50, sizeof(changeTurret_50));
+             tcpSend(changeTurret_50, sizeof(changeTurret_50));
+             break;
         default:
             std::cerr << "Incorrect incoming parameter!" << std::endl;
             return false;
+    }
+    std::string recv_data;
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus && recv_data == "50C30000040000000C2B0000")//判断是否接收到返回命令并且命令值正确
+        return true;
+    else
+    {
+        std::cerr << "Replacement of Turret multiplier failed!" << std::endl;//打印错误信息“更换Turret倍数失败！”
+        return false;
+    }
+}
+
+int brukerWLI::getMMDPosition(){
+    tcpSend(getMMDPos,sizeof(getMMDPos));//发送读取位置命令
+    std::string recv_data; //建立接收缓冲区
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus && recv_data.length() == 24 && recv_data.substr(0,6) == "68C300"){//命令接收成功并且验证命令正确性
+        switch(recv_data[17]){
+            case '0':
+                return bruker55MMD;
+            case '1':
+                return bruker1MMD;
+            case '2':
+                return bruker2MMD;
+            default:
+                return 0xff;
+        }
+    }
+    else{
+        std::cerr << "Description Failed to read the MMD position!" << std::endl;//打印错误信息“读取MMD倍数失败！”
+        return 0xff;
+    }
+}
+
+int brukerWLI::getTurretPosition() {
+    tcpSend(getTurretPos,sizeof(getTurretPos));//发送读取位置命令
+    std::string recv_data; //建立接收缓冲区
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus && recv_data.length() == 24 && recv_data.substr(0,6) == "69C300"){//命令接收成功并且验证命令正确性
+        switch(recv_data[17]){
+            case '0':
+                return MRe3DSensor;
+            case '1':
+                return bruker10Turret;
+            case '2':
+                return bruker20Turret;
+            case '3':
+                return bruker50Turret;
+            default:
+                return 0xff;
+        }
+    }
+    else{
+        std::cerr << "Description Failed to read the Turret position!" << std::endl;//打印错误信息“读取Turret倍数失败！”
+        return 0xff;
+    }
+}
+
+bool brukerWLI::initTurret(){
+    tcpSend(initTurretCmd,sizeof(initTurretCmd));//发送初始化Turret命令
+    std::string recv_data; //建立接收缓冲区
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus && recv_data == "50C30000040000000E2B0000")//判断是否接收到返回命令并且命令值正确
+        return true;
+    else
+    {
+        std::cerr << "Failed to initialize the Turret!" << std::endl;//打印错误信息“初始化Turret失败！”
+        return false;
     }
 }

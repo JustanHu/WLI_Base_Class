@@ -14,6 +14,7 @@
 #define bruker55MMD 0x00   //.55倍MMD代号
 #define bruker1MMD  0x01   //1倍MMD代号
 #define bruker2MMD  0x02   //2倍MMD代号
+
 #define MRe3DSensor 0x00 //MRe3D传感器代号
 #define bruker10Turret 0x01 //10倍Turret代号
 #define bruker20Turret 0x02 //20倍Turret代号
@@ -34,6 +35,14 @@ private: //私有命令
     char changeTurret_20[12] = {0x0C, 0x2B, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00};//更换为20倍
     char changeTurret_50[12] = {0x0C, 0x2B, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00};//更换为50倍
 
+    /******************************读取目镜位置指令*********************************/
+    char getMMDPos[8] = {0x0B, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    /******************************读取物镜位置指令*********************************/
+    char getTurretPos[8] = {0x0D, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    /******************************读取物镜位置指令*********************************/
+    char initTurretCmd[8] = {0x0E, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 private: //私有属性
     SOCKET sockfd;  // 套接字文件描述符
     struct sockaddr_in servaddr;  // 服务端地址结构
@@ -93,7 +102,42 @@ public:     //公有方法
  * @return 转换命令发送成功则返回true，命令发送失败或传入参数错误则返回false
  */
     bool changeTurret(int TurretNumber);    //Bruker物镜切换函数
+
+/**
+ * @brief  Bruker读取目镜位置
+ *
+ *
+ * @return 返回值为当前MMD镜头位置：
+ * bruker55MMD 0x00
+ * bruker1MMD 0x01
+ * bruker2MMD 0x02
+ * 操作失败 0xff
+ */
+    int getMMDPosition(); //Bruker读取目镜位置
+
+/**
+ * @brief  Bruker读取物镜位置
+ *
+ *
+ * @return 返回值为当前Turret镜头位置：
+ * MRe3DSensor 0x00
+ * bruker10Turret 0x01
+ * bruker20Turret 0x02
+ * bruker20Turret 0x03
+ * 操作失败 0xff
+ */
+    int getTurretPosition(); //Bruker读取目镜位置
+
+/**
+ * @brief  Bruker物镜初始化
+ * @return true:执行成功，false：执行失败
+ */
+    bool initTurret();    //Bruker物镜初始化
 };
+
+
+
+
 
 
 #endif //WLI_BASE_CLASS_BRUKERWLI_H

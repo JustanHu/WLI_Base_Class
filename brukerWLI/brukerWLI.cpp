@@ -68,6 +68,34 @@ bool brukerWLI::tcpRecv(std::string &recv_data) {
     return true;
 }
 
+float brukerWLI::hexToFloat(const std::string& hex){
+    union FloatConverter { //联合体定义，用于16进制和浮点数的转换
+        float f;
+        unsigned int i;
+    };
+    // 反转十六进制字符串
+    std::string reversedHex = hex.substr(6,2) + hex.substr(4,2) + hex.substr(2,2) + hex.substr(0,2);
+    unsigned int num;
+    std::stringstream ss;
+    ss << std::hex << reversedHex;
+    ss >> num;
+
+    FloatConverter converter;
+    converter.i = num;
+
+    return converter.f;
+}
+
+void brukerWLI::floatToHex(float value, char* hexArray){
+    union HexConverter { //联合体定义，用于16进制和浮点数的转换
+        float fValue;
+        unsigned char buffer[4];
+    };
+    HexConverter charTemp; // 利用联合体进行转换
+    charTemp.fValue = value;
+    memcpy(hexArray, charTemp.buffer, sizeof(HexConverter));
+}
+
 bool brukerWLI::changeMMD(int MMDNumber) {
     switch (MMDNumber) {    //根据所选MMD镜头倍数发送对应的命令
         case bruker55MMD:
@@ -181,4 +209,134 @@ bool brukerWLI::initTurret(){
         std::cerr << "Failed to initialize the Turret!" << std::endl;//打印错误信息“初始化Turret失败！”
         return false;
     }
+}
+
+bool brukerWLI::doAutofocus() {
+    tcpSend(autofocusCmd,sizeof(autofocusCmd));//发送自动聚焦命令
+    std::string recv_data; //建立接收缓冲区
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus && recv_data == "56C3000000000000")//判断是否接收到第一次返回命令并且命令值正确
+    {
+        std::string recv_temp; //建立第二次接收缓冲区
+        bool recvTempStatus = tcpRecv(recv_temp); //接收WLI返回的命令
+        if(recvTempStatus && recv_temp == "57C3000000000000")//判断是否接收到第二次返回命令并且命令值正确
+        return true;
+        else
+        {
+            std::cerr << "Failed to execute Autofocus. Procedure!" << std::endl;//打印错误信息“执行Autofocus失败！”
+            return false;
+        }
+    }
+    else
+    {
+        std::cerr << "Failed to execute Autofocus. Procedure!" << std::endl;//打印错误信息“执行Autofocus失败！”
+        return false;
+    }
+}
+
+bool brukerWLI::doSingleAcquisition(){
+    tcpSend(singleAcquisitionCmd,sizeof(singleAcquisitionCmd));//发送单次测量命令
+    std::string recv_data; //建立接收缓冲区
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus && recv_data == "58C3000000000000")//判断是否接收到第一次返回命令并且命令值正确
+    {
+        std::string recv_temp; //建立第二次接收缓冲区
+        bool recvTempStatus = tcpRecv(recv_temp); //接收WLI返回的命令
+        if(recvTempStatus && recv_temp == "59C3000000000000")//判断是否接收到第二次返回命令并且命令值正确
+            return true;
+        else
+        {
+            std::cerr << "Failed to perform a single acquisition!" << std::endl;//打印错误信息“执行单次测量失败！”
+            return false;
+        }
+    }
+    else
+    {
+        std::cerr << "Failed to perform a single acquisition!" << std::endl;//打印错误信息“执行单次测量失败！”
+        return false;
+    }
+}
+
+bool brukerWLI::doMeasurement(){
+    tcpSend(doMeasurementCmd,sizeof(doMeasurementCmd));//发送按配方测量测量命令
+    std::string recv_data; //建立接收缓冲区
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus && recv_data == "50C300000400000030230000")//判断是否接收到返回命令并且命令值正确
+        return true;
+    else
+    {
+        std::cerr << "Failed to do Measurement!" << std::endl;//打印错误信息“测量失败！”
+        return false;
+    }
+}
+
+float brukerWLI::getZScannerPos(){
+    tcpSend(getZPosCmd,sizeof(getZPosCmd));//发送获取Z扫描管位置命令
+    std::string recv_data; //建立接收缓冲区
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus){
+        std::string recv_hex = recv_data.substr(16,8); //建立接收缓冲区
+        return hexToFloat(recv_hex);//计算当前的位置值
+    }
+    else{
+        std::cerr << "Failed to do Measurement!" << std::endl;//打印错误信息“测量失败！”
+        return 0xffffffff;
+    }
+}
+
+float brukerWLI::getIntensity(){
+    tcpSend(getIntensityCmd,sizeof(getIntensityCmd));//发送获取强度值位置命令
+    std::string recv_data; //建立接收缓冲区
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus){
+        std::string recv_hex = recv_data.substr(16,8); //建立接收缓冲区
+        return hexToFloat(recv_hex);//计算当前的位置值
+    }
+    else{
+        std::cerr << "Failed to get Intensity!" << std::endl;//打印错误信息“测量失败！”
+        return 0xffffffff;
+    }
+}
+
+bool brukerWLI::setIntensity(float value){
+    char hexArray[4];
+    floatToHex(value,hexArray); //将浮点数转换为16进制值
+    char setIntensityCmd[12] = {0x02,0x2B,0x00,0x00,0x04,0x00,0x00,0x00,hexArray[0],hexArray[1],hexArray[2],hexArray[3]};
+    tcpSend(setIntensityCmd,sizeof(setIntensityCmd));//发送设置强度值指令
+    std::string recv_data; //建立接收缓冲区
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus && recv_data == "50C3000004000000022B0000")//判断是否接收到返回命令并且命令值正确
+        return true;
+    else
+    {
+        std::cerr << "Failed to set Intensity!" << std::endl;//打印错误信息“设置强度值失败！”
+        return false;
+    }
+}
+
+bool brukerWLI::setZScannerPos(float value){
+    char hexArray[4];
+    floatToHex(value,hexArray); //将浮点数转换为16进制值
+    char setZScannerPos[13] = {static_cast<char>(0x93),0x13,0x00,0x00,0x05,0x00,0x00,0x00,0x01,hexArray[0],hexArray[1],hexArray[2],hexArray[3]};
+    tcpSend(setZScannerPos,sizeof(setZScannerPos));//发送设置位置指令
+    std::string recv_data; //建立接收缓冲区
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus && recv_data == "54C3000000000000")//判断是否接收到第一次返回命令并且命令值正确
+    {
+        std::string recv_temp; //建立第二次接收缓冲区
+        bool recvTempStatus = tcpRecv(recv_temp); //接收WLI返回的命令
+        if(recvTempStatus && recv_temp == "55C3000000000000")//判断是否接收到第二次返回命令并且命令值正确
+            return true;
+        else
+        {
+            std::cerr << "Failed to set Z Scanner Position!" << std::endl;//打印错误信息“执行单次测量失败！”
+            return false;
+        }
+    }
+    else
+    {
+        std::cerr << "Failed to set Z Scanner Position!" << std::endl;//打印错误信息“执行单次测量失败！”
+        return false;
+    }
+
 }

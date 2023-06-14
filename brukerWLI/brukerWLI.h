@@ -9,6 +9,11 @@
 #include "winsock2.h"
 #include <string>
 #include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <algorithm>
+#include <cstring>
+#include <bitset>
 
 #define MAX_BUF_SIZE 1024 //将TCP缓冲区的最大大小定义为1024字节
 #define bruker55MMD 0x00   //.55倍MMD代号
@@ -41,11 +46,28 @@ private: //私有命令
     /******************************读取物镜位置指令*********************************/
     char getTurretPos[8] = {0x0D, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-    /******************************读取物镜位置指令*********************************/
+    /******************************初始化物镜位置指令*********************************/
     char initTurretCmd[8] = {0x0E, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    /******************************自动聚焦指令*********************************/
+    char autofocusCmd[8] = {0x70, 0x17, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    /******************************单次测量指令*********************************/
+    char singleAcquisitionCmd[8] = {0x2F, 0x23, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    /******************************按当前配方测量指令*********************************/
+    char doMeasurementCmd[8] = {0x30, 0x23, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    /******************************获取当前扫描管位置指令*********************************/
+    char getZPosCmd[8] = {static_cast<char>(0xA0), 0x13, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    /******************************获取当前强度值指令*********************************/
+    char getIntensityCmd[8] = {0x01, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
 private: //私有属性
     SOCKET sockfd;  // 套接字文件描述符
     struct sockaddr_in servaddr;  // 服务端地址结构
+
 
 protected:  //保护方法
 /**
@@ -64,6 +86,21 @@ protected:  //保护方法
  * @return 数据接收成功返回true，接收失败返回false
  */
     bool tcpRecv(std::string &recv_data);         //TCP数据接收（hex数据形式接收）
+
+/**
+ * @brief  16进制数据转换为浮点数（适配 bruker从最低位到最高位的排序）
+ * @param  存储16进制的内存空间
+ *
+ * @return 转换后的浮点数值
+ */
+    float hexToFloat(const std::string& hex);
+
+/**
+ * @brief  浮点数转换为 16进制数（适配 bruker从最低位到最高位的排序）
+ * @param  value: 传入需要计算的浮点数
+ * @param  hexArray: 存储 16进制的内存空间
+ */
+    void floatToHex(float value, char* hexArray);
 
 public:     //公有方法
 /**
@@ -133,7 +170,56 @@ public:     //公有方法
  * @return true:执行成功，false：执行失败
  */
     bool initTurret();    //Bruker物镜初始化
+
+/**
+ * @brief  Bruker自动聚焦
+ * @return true:执行成功，false：执行失败
+ */
+    bool doAutofocus();    //Bruker自动聚焦
+
+/**
+ * @brief  Bruker单次测量
+ * @return true:执行成功，false：执行失败
+ */
+    bool doSingleAcquisition();    //Bruker单次测量
+
+/**
+ * @brief  Bruker按当前配方测量
+ * @return true:执行成功，false：执行失败
+ */
+    bool doMeasurement();    //Bruker当前配方测量
+
+/**
+ * @brief  获取当前Z扫描管位置
+ * @return 扫描管当前所处位置值 (单位：nm)
+ *          0xffffffff:执行命令失败
+ */
+    float getZScannerPos();    //获取当前Z扫描管位置
+
+/**
+ * @brief  获取当前白光强度值
+ * @return 当前白光强度值（%）
+ *          0xffffffff:执行命令失败
+ */
+    float getIntensity();    //获取当前白光强度值
+
+/**
+ * @brief  设置当前白光强度值
+ * @param  需要设置的强度值（%）
+ * @return true:执行成功，false：执行失败
+ */
+    bool setIntensity(float value); //设置当前白光强度值
+
+/**
+ * @brief  移动扫描管位置（绝对运动）
+ * @param  需要移动的绝对位置（nm）
+ * @return true:执行成功，false：执行失败
+ */
+    bool setZScannerPos(float value); //移动扫描管位置
+
 };
+
+
 
 
 

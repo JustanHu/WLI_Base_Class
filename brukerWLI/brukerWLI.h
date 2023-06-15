@@ -64,6 +64,18 @@ private: //私有命令
     /******************************获取当前强度值指令*********************************/
     char getIntensityCmd[8] = {0x01, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
+    /******************************设置为仅允许仪器控制模式*********************************/
+    char setInstrumentControlOnlyCmd[8] = {0x16, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    /******************************获取当前锁定模式状态*********************************/
+    char getLockoutModeCmd[8] = {0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    /******************************设置正常模式*********************************/
+    char setNormalModeCmd[8] = {0x0B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    /******************************设置为完全锁定模式*********************************/
+    char setLockoutModeCmd[8] = {0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
 private: //私有属性
     SOCKET sockfd;  // 套接字文件描述符
     struct sockaddr_in servaddr;  // 服务端地址结构
@@ -217,6 +229,33 @@ public:     //公有方法
  */
     bool setZScannerPos(float value); //移动扫描管位置
 
+/**
+ * @brief  设置为仅允许仪器控制模式
+ * @return true:执行成功，false：执行失败
+ */
+    bool setInstrumentControlOnlyMode();
+
+/**
+ * @brief  获取当前锁定模式
+ * @return
+ * 0x00: 正常模式
+ * 0x01: 仅仪表控制模式
+ * 0x02: 完全锁定模式
+ * 0Xff: 获取失败
+ */
+    int getLockoutMode();
+
+/**
+  * @brief  设置当前模式为正常模式
+  * @return true:执行成功，false：执行失败
+  */
+    bool setNormalMode();
+
+/**
+  * @brief  设置当前模式为全锁定模式
+  * @return true:执行成功，false：执行失败
+  */
+    bool setLockoutMode();
 };
 
 

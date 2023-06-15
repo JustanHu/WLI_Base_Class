@@ -5,7 +5,7 @@
 #include "brukerWLI.h"
 
 
-brukerWLI::brukerWLI(const std::string& brukerWLIIp,int brukerWLIPort) {
+brukerWLI::brukerWLI(const std::string& brukerWLIIp, int brukerWLIPort) {
     // 初始化 Socket 库
     WSADATA wsaData; //定义一个 WSADATA 结构体变量 wsaData，用于存储 WSAStartup 函数的返回信息
     int ret = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -329,14 +329,75 @@ bool brukerWLI::setZScannerPos(float value){
             return true;
         else
         {
-            std::cerr << "Failed to set Z Scanner Position!" << std::endl;//打印错误信息“执行单次测量失败！”
+            std::cerr << "Failed to set Z Scanner Position!" << std::endl;//打印错误信息“设置扫描管位置失败！”
             return false;
         }
     }
     else
     {
-        std::cerr << "Failed to set Z Scanner Position!" << std::endl;//打印错误信息“执行单次测量失败！”
+        std::cerr << "Failed to set Z Scanner Position!" << std::endl;//打印错误信息“设置扫描管位置失败！”
         return false;
     }
 
+}
+
+bool brukerWLI::setInstrumentControlOnlyMode(){
+    tcpSend(setInstrumentControlOnlyCmd,sizeof(setInstrumentControlOnlyCmd));//发送命令
+    std::string recv_data; //建立接收缓冲区
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus && recv_data == "50C300000400000016000000")//判断是否接收到返回命令并且命令值正确
+        return true;
+    else
+    {
+        std::cerr << "Failed to set Instrument Control Only Mode !" << std::endl;//打印错误信息“设置仅仪表控制模式失败！”
+        return false;
+    }
+}
+
+int brukerWLI::getLockoutMode(){
+    tcpSend(getLockoutModeCmd,sizeof(getLockoutModeCmd));//发送命令
+    std::string recv_data; //建立接收缓冲区
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus && recv_data.length() == 24 && recv_data.substr(0,6) == "6AC300"){//命令接收成功并且验证命令正确性
+        switch(recv_data[17]){
+            case '0':
+                return 0x00;
+            case '1':
+                return 0x01;
+            case '2':
+                return 0x02;
+            default:
+                return 0xff;
+        }
+    }
+    else{
+        std::cerr << "Failed to get Lockout Mode!" << std::endl;//打印错误信息“获取锁定模式失败！”
+        return 0xff;
+    }
+}
+
+bool brukerWLI::setNormalMode(){
+    tcpSend(setNormalModeCmd,sizeof(setNormalModeCmd));//发送命令
+    std::string recv_data; //建立接收缓冲区
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus && recv_data == "50C30000040000000B000000")//判断是否接收到返回命令并且命令值正确
+        return true;
+    else
+    {
+        std::cerr << "Failed to set Normal Mode !" << std::endl;//打印错误信息“设置正常模式失败！”
+        return false;
+    }
+}
+
+bool brukerWLI::setLockoutMode(){
+    tcpSend(setLockoutModeCmd,sizeof(setLockoutModeCmd));//发送命令
+    std::string recv_data; //建立接收缓冲区
+    bool recvStatus = tcpRecv(recv_data); //接收WLI返回的命令
+    if(recvStatus && recv_data == "50C30000040000000A000000")//判断是否接收到返回命令并且命令值正确
+        return true;
+    else
+    {
+        std::cerr << "Failed to set Lockout Mode !" << std::endl;//打印错误信息“设置全锁定模式失败！”
+        return false;
+    }
 }
